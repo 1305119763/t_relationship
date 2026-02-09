@@ -1,0 +1,89 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("user") // admin, sales, manager
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  customers Customer[]
+  approvalRequests ApprovalRequest[]
+}
+
+model Customer {
+  id          Int      @id @default(autoincrement())
+  name        String
+  industry    String?
+  status      String   @default("new") // new, potential, active, lost
+  ownerId     Int
+  owner       User     @relation(fields: [ownerId], references: [id])
+  contacts    Contact[]
+  opportunities Opportunity[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Contact {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String?
+  phone       String?
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Opportunity {
+  id          Int      @id @default(autoincrement())
+  name        String
+  amount      Float
+  stage       String // qualification, proposal, negotiation, closed
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ApprovalTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  steps       String   // JSON string storing steps configuration
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  requests    ApprovalRequest[]
+}
+
+model ApprovalRequest {
+  id          Int      @id @default(autoincrement())
+  templateId  Int
+  template    ApprovalTemplate @relation(fields: [templateId], references: [id])
+  applicantId Int
+  applicant   User     @relation(fields: [applicantId], references: [id])
+  status      String   @default("pending") // pending, approved, rejected
+  currentStep Int      @default(0)
+  data        String   // JSON string storing form data
+  logs        ApprovalLog[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ApprovalLog {
+  id          Int      @id @default(autoincrement())
+  requestId   Int
+  request     ApprovalRequest @relation(fields: [requestId], references: [id])
+  approverId  Int
+  action      String   // approve, reject
+  comment     String?
+  createdAt   DateTime @default(now())
+}
