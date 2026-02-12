@@ -17,6 +17,12 @@ model User {
   updatedAt DateTime @updatedAt
   customers Customer[]
   approvalRequests ApprovalRequest[]
+  followUps FollowUp[]
+  tasks     Task[]
+  workOrders WorkOrder[]
+  workReports WorkReport[]
+  schedules Schedule[]
+  announcements Announcement[]
 }
 
 model Customer {
@@ -28,6 +34,8 @@ model Customer {
   owner       User     @relation(fields: [ownerId], references: [id])
   contacts    Contact[]
   opportunities Opportunity[]
+  followUps   FollowUp[]
+  workOrders  WorkOrder[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -52,6 +60,22 @@ model Opportunity {
   customer    Customer @relation(fields: [customerId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model FollowUp {
+  id            Int      @id @default(autoincrement())
+  type          String // phone, email, visit, meeting
+  content       String
+  customerId    Int
+  customer      Customer @relation(fields: [customerId], references: [id])
+  contact       String
+  customerStatus String
+  createNextTask Boolean @default(false)
+  followUpTime  DateTime
+  creatorId     Int
+  creator       User     @relation(fields: [creatorId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model ApprovalTemplate {
@@ -86,4 +110,88 @@ model ApprovalLog {
   action      String   // approve, reject
   comment     String?
   createdAt   DateTime @default(now())
+}
+
+model Task {
+  id                Int      @id @default(autoincrement())
+  title             String
+  startTime         DateTime
+  endTime           DateTime
+  priority          Int      // 1:重要, 2:紧急, 3:普通, 4:重要且紧急
+  businessType      String?  // customer, order, opportunity
+  businessValue     String?
+  description       String?
+  attachment        String?
+  responsiblePerson String
+  creatorId         Int
+  creator           User     @relation(fields: [creatorId], references: [id])
+  status            String   @default("pending") // pending, in_progress, completed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model WorkOrder {
+  id                Int      @id @default(autoincrement())
+  customerId        Int
+  customer          Customer @relation(fields: [customerId], references: [id])
+  orderId           String?
+  type              String   // repair, install, consult
+  title             String
+  content           String
+  status            String   // normal, urgent, very_urgent
+  mobileAttendance  String   @default("1") // 1: yes, 0: no
+  signInAddress     String
+  signInRange       String
+  creatorId         Int
+  creator           User     @relation(fields: [creatorId], references: [id])
+  workOrderStatus   String   @default("pending") // pending, processing, completed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model WorkReport {
+  id           Int      @id @default(autoincrement())
+  reportType   String   // daily, weekly, monthly
+  reportDate   String
+  workSummary  String
+  fileAttachment String?
+  imageUpload  String?
+  approver     String
+  ccMembers    String   // JSON array
+  creatorId    Int
+  creator      User     @relation(fields: [creatorId], references: [id])
+  status       String   @default("pending") // pending, approved
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Schedule {
+  id            Int      @id @default(autoincrement())
+  title         String
+  startTime     DateTime
+  endTime       DateTime
+  urgency       Int      // 1:重要, 2:紧急, 3:普通, 4:重要且紧急
+  businessType  String?
+  businessValue String?
+  description   String?
+  status        String   // in_progress, completed, cancelled
+  autoEnd       String   @default("1") // 1: yes, 0: no
+  taskTag       String   // red, orange, green, blue, purple, black
+  reminder      String   // on_time, 5min, 15min, 30min, 1hour
+  creatorId     Int
+  creator       User     @relation(fields: [creatorId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  category    String   // company_news, announcement, rules, hr
+  title       String
+  recipient   String   // all, specific
+  content     String
+  creatorId   Int
+  creator     User     @relation(fields: [creatorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

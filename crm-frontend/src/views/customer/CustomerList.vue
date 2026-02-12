@@ -2,7 +2,8 @@
 import { ref, onMounted, reactive } from 'vue'
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '@/api/customer'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, ChatLineRound } from '@element-plus/icons-vue'
+import AddFollowUpDialog from '@/components/AddFollowUpDialog.vue'
 
 interface Customer {
   id: number
@@ -19,6 +20,10 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增客户')
 const formRef = ref()
+
+// 跟进弹窗相关
+const followUpDialogVisible = ref(false)
+const selectedCustomer = ref<Customer | null>(null)
 
 const form = reactive({
   id: 0,
@@ -78,6 +83,16 @@ const handleDelete = (row: Customer) => {
   })
 }
 
+const handleAddFollowUp = (row: Customer) => {
+  selectedCustomer.value = row
+  followUpDialogVisible.value = true
+}
+
+const handleFollowUpCreated = () => {
+  ElMessage.success('跟进记录已创建')
+  // 可以在这里刷新数据或执行其他操作
+}
+
 const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid: boolean) => {
@@ -122,9 +137,10 @@ onMounted(() => {
         </template>
       </el-table-column>
       <el-table-column prop="owner.name" label="负责人" />
-      <el-table-column label="Actions" width="200">
+      <el-table-column label="Actions" width="300">
         <template #default="{ row }">
           <el-button type="primary" size="small" :icon="Edit" @click="handleEdit(row)">编辑</el-button>
+          <el-button type="success" size="small" :icon="ChatLineRound" @click="handleAddFollowUp(row)">添加跟进</el-button>
           <el-button type="danger" size="small" :icon="Delete" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -154,6 +170,13 @@ onMounted(() => {
         </span>
       </template>
     </el-dialog>
+
+    <AddFollowUpDialog
+      v-model:visible="followUpDialogVisible"
+      :customer-id="selectedCustomer?.id"
+      :customer-name="selectedCustomer?.name"
+      @follow-up-created="handleFollowUpCreated"
+    />
   </div>
 </template>
 

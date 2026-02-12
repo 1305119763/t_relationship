@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import { fail } from '../utils/response'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret'
 
@@ -11,7 +12,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   const token = req.header('Authorization')?.replace('Bearer ', '')
 
   if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' })
+    return fail(res, 401, '未提供 token，授权失败', null)
   }
 
   try {
@@ -19,6 +20,6 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     req.user = decoded
     next()
   } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' })
+    fail(res, 401, 'Token 无效', null)
   }
 }

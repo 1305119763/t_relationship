@@ -12,14 +12,17 @@ import {
   ChatDotRound,
   Check,
   Search,
-  Bell
+  Bell,
+  FullScreen
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const isCollapse = ref(false)
+const collapseKey = 'crm_sidebar_collapse'
+const savedCollapse = typeof window !== 'undefined' ? localStorage.getItem(collapseKey) : null
+const isCollapse = ref(savedCollapse === '1')
 const activeMenu = computed(() => route.path)
 const tabs = ref<{ name: string; label: string }[]>([])
 const activeTab = ref('')
@@ -33,6 +36,22 @@ const handleCommand = (command: string) => {
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
+}
+
+const isFullscreen = ref(false)
+const toggleFullscreen = async () => {
+  if (!document.fullscreenElement) {
+    await document.documentElement.requestFullscreen()
+    isFullscreen.value = true
+  } else {
+    await document.exitFullscreen()
+    isFullscreen.value = false
+  }
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('fullscreenchange', () => {
+    isFullscreen.value = !!document.fullscreenElement
+  })
 }
 
 const addTab = (path: string, label: string) => {
@@ -50,6 +69,12 @@ watch(
   },
   { immediate: true }
 )
+
+watch(isCollapse, (val) => {
+  try {
+    localStorage.setItem(collapseKey, val ? '1' : '0')
+  } catch {}
+})
 
 const handleTabClick = (pane: any) => {
   if (pane.props.name && pane.props.name !== route.path) {
@@ -135,6 +160,11 @@ const handleTabRemove = (name: string | number) => {
         <div class="header-right">
           <el-input class="header-search" size="small" :prefix-icon="Search" placeholder="搜索" />
           <el-icon class="header-icon"><Bell /></el-icon>
+          <el-tooltip content="全屏" placement="bottom">
+            <el-icon class="header-icon" @click="toggleFullscreen">
+              <FullScreen />
+            </el-icon>
+          </el-tooltip>
           <el-dropdown @command="handleCommand">
             <span class="el-dropdown-link">
               {{ userStore.userInfo?.name || '用户' }}

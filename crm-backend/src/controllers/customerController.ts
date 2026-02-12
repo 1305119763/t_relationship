@@ -1,6 +1,7 @@
 import { Response } from 'express'
 import { AuthRequest } from '../middlewares/auth'
 import prisma from '../utils/prisma'
+import { success, successCreated, fail } from '../utils/response'
 
 export const getCustomers = async (req: AuthRequest, res: Response) => {
   try {
@@ -15,9 +16,9 @@ export const getCustomers = async (req: AuthRequest, res: Response) => {
         }
       }
     })
-    res.json(customers)
+    success(res, customers)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -39,11 +40,11 @@ export const getCustomer = async (req: AuthRequest, res: Response) => {
       }
     })
     if (!customer) {
-      return res.status(404).json({ message: 'Customer not found' })
+      return fail(res, 404, '客户不存在', null)
     }
-    res.json(customer)
+    success(res, customer)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -60,9 +61,9 @@ export const createCustomer = async (req: AuthRequest, res: Response) => {
         ownerId
       }
     })
-    res.status(201).json(customer)
+    successCreated(res, customer)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -79,9 +80,9 @@ export const updateCustomer = async (req: AuthRequest, res: Response) => {
         status
       }
     })
-    res.json(customer)
+    success(res, customer)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -92,8 +93,55 @@ export const deleteCustomer = async (req: AuthRequest, res: Response) => {
     await prisma.customer.delete({
       where: { id: Number(id) }
     })
-    res.json({ message: 'Customer deleted' })
+    success(res, null, '删除成功')
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
+  }
+}
+
+export const createFollowUp = async (req: AuthRequest, res: Response) => {
+  const { type, content, customerId, contact, customerStatus, createNextTask, followUpTime } = req.body
+  const creatorId = req.user.id
+
+  try {
+    const followUp = await prisma.followUp.create({
+      data: {
+        type,
+        content,
+        customerId,
+        contact,
+        customerStatus,
+        createNextTask,
+        followUpTime,
+        creatorId
+      }
+    })
+    successCreated(res, followUp)
+  } catch (error) {
+    fail(res, 500, '服务器错误', null)
+  }
+}
+
+export const getCustomerFollowUps = async (req: AuthRequest, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const followUps = await prisma.followUp.findMany({
+      where: { customerId: Number(id) },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        followUpTime: 'desc'
+      }
+    })
+    success(res, followUps)
+  } catch (error) {
+    fail(res, 500, '服务器错误', null)
   }
 }

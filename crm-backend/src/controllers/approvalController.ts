@@ -1,14 +1,15 @@
 import { Response } from 'express'
 import { AuthRequest } from '../middlewares/auth'
 import prisma from '../utils/prisma'
+import { success, successCreated, fail } from '../utils/response'
 
 // Templates
 export const getTemplates = async (req: AuthRequest, res: Response) => {
   try {
     const templates = await prisma.approvalTemplate.findMany()
-    res.json(templates)
+    success(res, templates)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -22,9 +23,9 @@ export const createTemplate = async (req: AuthRequest, res: Response) => {
         steps: JSON.stringify(steps)
       }
     })
-    res.status(201).json(template)
+    successCreated(res, template)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -39,9 +40,9 @@ export const getRequests = async (req: AuthRequest, res: Response) => {
         }
       }
     })
-    res.json(requests)
+    success(res, requests)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -59,9 +60,9 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         currentStep: 0
       }
     })
-    res.status(201).json(request)
+    successCreated(res, request)
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -88,10 +89,9 @@ export const approveRequest = async (req: AuthRequest, res: Response) => {
         }
       })
     ])
-
-    res.json({ message: 'Approved successfully', status: 'approved' })
+    success(res, { status: 'approved' }, '审批通过')
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }
 
@@ -117,9 +117,8 @@ export const rejectRequest = async (req: AuthRequest, res: Response) => {
         }
       })
     ])
-
-    res.json({ message: 'Rejected successfully' })
+    success(res, null, '已驳回')
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error })
+    fail(res, 500, '服务器错误', null)
   }
 }

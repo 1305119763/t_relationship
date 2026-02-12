@@ -29,3 +29,18 @@ export const deleteCustomer = (id: number) => {
     method: 'delete'
   })
 }
+
+export const createFollowUp = (data: any) => {
+  return request({
+    url: '/customers/follow-ups',
+    method: 'post',
+    data
+  })
+}
+
+export const getCustomerFollowUps = (customerId: number) => {
+  return request({
+    url: `/customers/${customerId}/follow-ups`,
+    method: 'get'
+  })
+}
